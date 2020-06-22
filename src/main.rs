@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::io::BufRead;
+use termion::{color, style};
 
 #[derive(Debug)]
 struct Line<'a> {
@@ -13,6 +14,21 @@ struct CompiledLine<'a> {
     label: Option<&'a str>,
     instruction: Option<&'a str>,
     comment: Option<&'a str>,
+}
+
+impl CompiledLine<'_> {
+    fn color_display(&self) {
+        if let Some(label) = self.label {
+            print!("{}{}: ", color::Fg(color::Red), label);
+        };
+        if let Some(instruction) = self.instruction {
+            print!("{}{}", color::Fg(color::Green), instruction);
+        };
+        if let Some(comment) = self.comment {
+            print!("{} ;{}", color::Fg(color::Blue), comment);
+        };
+        println!("{}", style::Reset);
+    }
 }
 
 fn extract<'a>(line: &'a str) -> CompiledLine<'a> {
@@ -38,8 +54,9 @@ fn main() {
             position: i,
             content: content.unwrap(),
         };
+        let compiled = extract(line.content.as_str());
         i = i + 1;
-        println!("{:?}", extract(line.content.as_str()));
+        compiled.color_display();
     }
 }
 
