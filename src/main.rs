@@ -9,21 +9,21 @@ struct Line<'a> {
 }
 
 #[derive(Debug, PartialEq)]
-struct CompiledLine {
-    label: Option<String>,
-    instruction: Option<String>,
-    comment: Option<String>,
+struct CompiledLine<'a> {
+    label: Option<&'a str>,
+    instruction: Option<&'a str>,
+    comment: Option<&'a str>,
 }
 
-fn extract(line: &str) -> CompiledLine {
+fn extract<'a>(line: &'a str) -> CompiledLine<'a> {
     let r =
-        Regex::new(r"^\s*((?P<label>[^:]*):)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$")
+        Regex::new(r"^\s*((?P<label>[^:;]*):)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$")
             .unwrap();
     let c = r.captures(line).unwrap();
     CompiledLine {
-        label: c.name("label").map(|x| String::from(x.as_str())),
-        instruction: c.name("instruction").map(|x| String::from(x.as_str())),
-        comment: c.name("comment").map(|x| String::from(x.as_str())),
+        label: c.name("label").map(|x| x.as_str()),
+        instruction: c.name("instruction").map(|x| x.as_str()),
+        comment: c.name("comment").map(|x| x.as_str()),
     }
 }
 
@@ -52,9 +52,9 @@ mod tests {
         let line = "next: lda ($24),x ; load from the table";
         assert_eq!(
             CompiledLine {
-                label: Some("next".to_string()),
-                instruction: Some("lda ($24),x".to_string()),
-                comment: Some(" load from the table".to_string())
+                label: Some("next"),
+                instruction: Some("lda ($24),x"),
+                comment: Some(" load from the table")
             },
             extract(line)
         )
@@ -64,7 +64,7 @@ mod tests {
     fn test_extract_label() {
         assert_eq!(
             CompiledLine {
-                label: Some(String::from("label")),
+                label: Some("label"),
                 instruction: None,
                 comment: None
             },
@@ -77,7 +77,7 @@ mod tests {
         assert_eq!(
             CompiledLine {
                 label: None,
-                instruction: Some(String::from("operation")),
+                instruction: Some("operation"),
                 comment: None
             },
             extract("operation")
@@ -90,7 +90,7 @@ mod tests {
             CompiledLine {
                 label: None,
                 instruction: None,
-                comment: Some(String::from("comment"))
+                comment: Some("comment")
             },
             extract(";comment")
         );
