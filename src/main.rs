@@ -32,9 +32,10 @@ impl CompiledLine<'_> {
 }
 
 fn extract<'a>(line: &'a str) -> CompiledLine<'a> {
-    let r =
-        Regex::new(r"^\s*((?P<label>[^:;]*):)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$")
-            .unwrap();
+    let r = Regex::new(
+        r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$",
+    )
+    .unwrap();
     let c = r.captures(line).unwrap();
     CompiledLine {
         label: c.name("label").map(|x| x.as_str()),
@@ -77,6 +78,30 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_white_space_is_removed() {
+        let line = "  next  :    lda ($24),x      ; load from the table";
+        assert_eq!(
+            CompiledLine {
+                label: Some("next"),
+                instruction: Some("lda ($24),x"),
+                comment: Some(" load from the table")
+            },
+            extract(line)
+        )
+    }
+    #[test]
+    fn test_empty_label_is_found() {
+        let line = ":    instr";
+        assert_eq!(
+            CompiledLine {
+                label: Some(""),
+                instruction: Some("instr"),
+                comment: None
+            },
+            extract(line)
+        )
+    }
     #[test]
     fn test_extract_label() {
         assert_eq!(
