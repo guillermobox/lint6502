@@ -2,21 +2,14 @@ use regex::Regex;
 use std::io::BufRead;
 use termion::{color, style};
 
-#[derive(Debug)]
-struct Line<'a> {
-    file: &'a String,
-    position: u32,
-    content: String,
-}
-
 #[derive(Debug, PartialEq)]
-struct CompiledLine<'a> {
+struct Line<'a> {
     label: Option<&'a str>,
     instruction: Option<&'a str>,
     comment: Option<&'a str>,
 }
 
-impl CompiledLine<'_> {
+impl Line<'_> {
     fn color_display(&self) {
         if let Some(label) = self.label {
             print!("{}{}: ", color::Fg(color::Red), label);
@@ -31,13 +24,13 @@ impl CompiledLine<'_> {
     }
 }
 
-fn extract<'a>(line: &'a str) -> CompiledLine<'a> {
+fn extract<'a>(line: &'a str) -> Line<'a> {
     let r = Regex::new(
         r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$",
     )
     .unwrap();
     let c = r.captures(line).unwrap();
-    CompiledLine {
+    Line {
         label: c.name("label").map(|x| x.as_str()),
         instruction: c.name("instruction").map(|x| x.as_str()),
         comment: c.name("comment").map(|x| x.as_str()),
@@ -48,16 +41,11 @@ fn main() {
     let filepath = std::env::args().nth(1).unwrap(); // yes I know
     let fhandler = std::fs::File::open(&filepath).unwrap();
     let reader = std::io::BufReader::new(fhandler);
-    let mut i = 0;
     for content in reader.lines() {
-        let line = Line {
-            file: &filepath,
-            position: i,
-            content: content.unwrap(),
-        };
-        let compiled = extract(line.content.as_str());
-        i = i + 1;
-        compiled.color_display();
+        if let Ok(string) = content {
+            let compiled = extract(string.as_str());
+            compiled.color_display();
+        }
     }
 }
 
@@ -69,7 +57,7 @@ mod tests {
     fn test_extract() {
         let line = "next: lda ($24),x ; load from the table";
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: Some("next"),
                 instruction: Some("lda ($24),x"),
                 comment: Some(" load from the table")
@@ -82,7 +70,7 @@ mod tests {
     fn test_white_space_is_removed() {
         let line = "  next  :    lda ($24),x      ; load from the table";
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: Some("next"),
                 instruction: Some("lda ($24),x"),
                 comment: Some(" load from the table")
@@ -90,11 +78,12 @@ mod tests {
             extract(line)
         )
     }
+
     #[test]
     fn test_empty_label_is_found() {
         let line = ":    instr";
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: Some(""),
                 instruction: Some("instr"),
                 comment: None
@@ -102,10 +91,11 @@ mod tests {
             extract(line)
         )
     }
+
     #[test]
     fn test_extract_label() {
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: Some("label"),
                 instruction: None,
                 comment: None
@@ -113,11 +103,11 @@ mod tests {
             extract("label:")
         );
     }
-    #[test]
 
+    #[test]
     fn test_extract_operation() {
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: None,
                 instruction: Some("operation"),
                 comment: None
@@ -126,10 +116,9 @@ mod tests {
         );
     }
     #[test]
-
     fn test_extract_comment() {
         assert_eq!(
-            CompiledLine {
+            Line {
                 label: None,
                 instruction: None,
                 comment: Some("comment")
