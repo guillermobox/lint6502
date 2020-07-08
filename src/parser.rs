@@ -1,23 +1,23 @@
 use regex::Regex;
 
 #[derive(Debug, PartialEq)]
-pub struct Line<'a> {
-    label: Option<&'a str>,
-    instruction: Option<&'a str>,
-    comment: Option<&'a str>,
+pub struct Line {
+    label: Option<String>,
+    instruction: Option<String>,
+    comment: Option<String>,
 }
 
-impl<'a> From<&'a str> for Line<'a> {
-    fn from(line: &'a str) -> Line<'a> {
+impl From<&str> for Line {
+    fn from(line: &str) -> Self {
         let r = Regex::new(
             r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$",
         )
         .unwrap();
         let c = r.captures(line).unwrap();
-        Line {
-            label: c.name("label").map(|x| x.as_str()),
-            instruction: c.name("instruction").map(|x| x.as_str()),
-            comment: c.name("comment").map(|x| x.as_str()),
+        Self {
+            label: c.name("label").map(|x| x.as_str().into()),
+            instruction: c.name("instruction").map(|x| x.as_str().into()),
+            comment: c.name("comment").map(|x| x.as_str().into()),
         }
     }
 }
@@ -31,9 +31,9 @@ mod tests {
         let line = "next: lda ($24),x ; load from the table";
         assert_eq!(
             Line {
-                label: Some("next"),
-                instruction: Some("lda ($24),x"),
-                comment: Some(" load from the table")
+                label: Some(String::from("next")),
+                instruction: Some(String::from("lda ($24),x")),
+                comment: Some(String::from(" load from the table"))
             },
             Line::from(line)
         )
@@ -44,9 +44,9 @@ mod tests {
         let line = "  next  :    lda ($24),x      ; load from the table";
         assert_eq!(
             Line {
-                label: Some("next"),
-                instruction: Some("lda ($24),x"),
-                comment: Some(" load from the table")
+                label: Some(String::from("next")),
+                instruction: Some(String::from("lda ($24),x")),
+                comment: Some(String::from(" load from the table"))
             },
             Line::from(line)
         )
@@ -57,8 +57,8 @@ mod tests {
         let line = ":    instr";
         assert_eq!(
             Line {
-                label: Some(""),
-                instruction: Some("instr"),
+                label: Some(String::from("")),
+                instruction: Some(String::from("instr")),
                 comment: None
             },
             Line::from(line)
@@ -69,7 +69,7 @@ mod tests {
     fn test_extract_label() {
         assert_eq!(
             Line {
-                label: Some("label"),
+                label: Some(String::from("label")),
                 instruction: None,
                 comment: None
             },
@@ -82,7 +82,7 @@ mod tests {
         assert_eq!(
             Line {
                 label: None,
-                instruction: Some("operation"),
+                instruction: Some(String::from("operation")),
                 comment: None
             },
             Line::from("operation")
@@ -94,7 +94,7 @@ mod tests {
             Line {
                 label: None,
                 instruction: None,
-                comment: Some("comment")
+                comment: Some(String::from("comment"))
             },
             Line::from(";comment")
         );
@@ -105,7 +105,7 @@ mod tests {
         assert_eq!(
             Line {
                 label: None,
-                instruction: Some("beq :+"),
+                instruction: Some(String::from("beq :+")),
                 comment: None
             },
             Line::from("beq :+")
