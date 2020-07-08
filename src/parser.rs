@@ -7,6 +7,15 @@ pub struct Line {
     comment: Option<String>,
 }
 
+impl Line {
+    fn new() -> Self {
+        Line {
+            label: None,
+            instruction: None,
+            comment: None,
+        }
+    }
+}
 impl From<&str> for Line {
     fn from(line: &str) -> Self {
         let r = Regex::new(
@@ -35,11 +44,7 @@ mod tests {
         fn new(input: &'static str) -> Self {
             TestCase {
                 input: input,
-                output: Line {
-                    label: None,
-                    comment: None,
-                    instruction: None,
-                },
+                output: Line::new(),
             }
         }
         fn label(mut self, value: &'static str) -> Self {
