@@ -26,79 +26,60 @@ impl From<&str> for Line {
 mod tests {
     use super::Line;
 
-    #[test]
-    fn test_extract() {
-        let line = "next: lda ($24),x ; load from the table";
-        assert_eq!(
-            Line {
-                label: Some(String::from("next")),
-                instruction: Some(String::from("lda ($24),x")),
-                comment: Some(String::from(" load from the table"))
-            },
-            Line::from(line)
-        )
+    struct TestCase {
+        input: &'static str,
+        output: (
+            Option<&'static str>,
+            Option<&'static str>,
+            Option<&'static str>,
+        ),
     }
 
     #[test]
-    fn test_white_space_is_removed() {
-        let line = "  next  :    lda ($24),x      ; load from the table";
-        assert_eq!(
-            Line {
-                label: Some(String::from("next")),
-                instruction: Some(String::from("lda ($24),x")),
-                comment: Some(String::from(" load from the table"))
+    fn test_creation_from_strings() {
+        let testcases = [
+            TestCase {
+                input: "next: lda ($24),x ; load from the table",
+                output: (
+                    Some("next"),
+                    Some("lda ($24),x"),
+                    Some(" load from the table"),
+                ),
             },
-            Line::from(line)
-        )
+            TestCase {
+                input: "  next  :    lda ($24),x      ; load from the table",
+                output: (
+                    Some("next"),
+                    Some("lda ($24),x"),
+                    Some(" load from the table"),
+                ),
+            },
+            TestCase {
+                input: ":    instr",
+                output: (Some(""), Some("instr"), None),
+            },
+            TestCase {
+                input: "label:",
+                output: (Some("label"), None, None),
+            },
+            TestCase {
+                input: "operation",
+                output: (None, Some("operation"), None),
+            },
+            TestCase {
+                input: ";comment",
+                output: (None, None, Some("comment")),
+            },
+        ];
+
+        for test in testcases.iter() {
+            let line = Line::from(test.input);
+            assert_eq!(line.label, test.output.0.map(String::from));
+            assert_eq!(line.instruction, test.output.1.map(String::from));
+            assert_eq!(line.comment, test.output.2.map(String::from));
+        }
     }
 
-    #[test]
-    fn test_empty_label_is_found() {
-        let line = ":    instr";
-        assert_eq!(
-            Line {
-                label: Some(String::from("")),
-                instruction: Some(String::from("instr")),
-                comment: None
-            },
-            Line::from(line)
-        )
-    }
-
-    #[test]
-    fn test_extract_label() {
-        assert_eq!(
-            Line {
-                label: Some(String::from("label")),
-                instruction: None,
-                comment: None
-            },
-            Line::from("label:")
-        );
-    }
-
-    #[test]
-    fn test_extract_operation() {
-        assert_eq!(
-            Line {
-                label: None,
-                instruction: Some(String::from("operation")),
-                comment: None
-            },
-            Line::from("operation")
-        );
-    }
-    #[test]
-    fn test_extract_comment() {
-        assert_eq!(
-            Line {
-                label: None,
-                instruction: None,
-                comment: Some(String::from("comment"))
-            },
-            Line::from(";comment")
-        );
-    }
     #[test]
     #[should_panic]
     fn test_relative_jump() {
