@@ -1,5 +1,4 @@
 use regex::Regex;
-use termion::{color, style};
 
 #[derive(Debug, PartialEq)]
 pub struct Line<'a> {
@@ -23,20 +22,6 @@ impl<'a> From<&'a str> for Line<'a> {
     }
 }
 
-impl Line<'_> {
-    pub fn color_display(&self) {
-        if let Some(label) = self.label {
-            print!("{}{}: ", color::Fg(color::Red), label);
-        };
-        if let Some(instruction) = self.instruction {
-            print!("{}{}", color::Fg(color::Green), instruction);
-        };
-        if let Some(comment) = self.comment {
-            print!("{} ;{}", color::Fg(color::Blue), comment);
-        };
-        println!("{}", style::Reset);
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::Line;

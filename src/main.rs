@@ -1,15 +1,12 @@
 mod parser;
-
 use std::io::BufRead;
 
-fn main() {
-    let filepath = std::env::args().nth(1).unwrap(); // yes I know
-    let fhandler = std::fs::File::open(&filepath).unwrap();
+fn iterator(filename: &str) -> impl Iterator {
+    let fhandler = std::fs::File::open(filename).unwrap();
     let reader = std::io::BufReader::new(fhandler);
-    for content in reader.lines() {
-        if let Ok(string) = content {
-            let compiled = parser::Line::from(string.as_str());
-            compiled.color_display();
-        }
-    }
+    reader.lines().map(|l| l.unwrap())
+}
+
+fn main() {
+    let filepath = std::env::args().nth(1).expect("Give me an argument");
 }
