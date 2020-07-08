@@ -8,20 +8,8 @@ pub struct Line<'a> {
     comment: Option<&'a str>,
 }
 
-impl Line<'_> {
-    pub fn color_display(&self) {
-        if let Some(label) = self.label {
-            print!("{}{}: ", color::Fg(color::Red), label);
-        };
-        if let Some(instruction) = self.instruction {
-            print!("{}{}", color::Fg(color::Green), instruction);
-        };
-        if let Some(comment) = self.comment {
-            print!("{} ;{}", color::Fg(color::Blue), comment);
-        };
-        println!("{}", style::Reset);
-    }
-    pub fn from_str<'a>(line: &'a str) -> Line<'a> {
+impl<'a> From<&'a str> for Line<'a> {
+    fn from(line: &'a str) -> Line<'a> {
         let r = Regex::new(
             r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$",
         )
@@ -35,9 +23,23 @@ impl Line<'_> {
     }
 }
 
+impl Line<'_> {
+    pub fn color_display(&self) {
+        if let Some(label) = self.label {
+            print!("{}{}: ", color::Fg(color::Red), label);
+        };
+        if let Some(instruction) = self.instruction {
+            print!("{}{}", color::Fg(color::Green), instruction);
+        };
+        if let Some(comment) = self.comment {
+            print!("{} ;{}", color::Fg(color::Blue), comment);
+        };
+        println!("{}", style::Reset);
+    }
+}
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::Line;
 
     #[test]
     fn test_extract() {
@@ -48,7 +50,7 @@ mod tests {
                 instruction: Some("lda ($24),x"),
                 comment: Some(" load from the table")
             },
-            Line::from_str(line)
+            Line::from(line)
         )
     }
 
@@ -61,7 +63,7 @@ mod tests {
                 instruction: Some("lda ($24),x"),
                 comment: Some(" load from the table")
             },
-            Line::from_str(line)
+            Line::from(line)
         )
     }
 
@@ -74,7 +76,7 @@ mod tests {
                 instruction: Some("instr"),
                 comment: None
             },
-            Line::from_str(line)
+            Line::from(line)
         )
     }
 
@@ -86,7 +88,7 @@ mod tests {
                 instruction: None,
                 comment: None
             },
-            Line::from_str("label:")
+            Line::from("label:")
         );
     }
 
@@ -98,7 +100,7 @@ mod tests {
                 instruction: Some("operation"),
                 comment: None
             },
-            Line::from_str("operation")
+            Line::from("operation")
         );
     }
     #[test]
@@ -109,7 +111,19 @@ mod tests {
                 instruction: None,
                 comment: Some("comment")
             },
-            Line::from_str(";comment")
+            Line::from(";comment")
+        );
+    }
+    #[test]
+    #[should_panic]
+    fn test_relative_jump() {
+        assert_eq!(
+            Line {
+                label: None,
+                instruction: Some("beq :+"),
+                comment: None
+            },
+            Line::from("beq :+")
         );
     }
 }

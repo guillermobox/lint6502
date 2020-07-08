@@ -8,7 +8,7 @@ fn main() {
     let reader = std::io::BufReader::new(fhandler);
     for content in reader.lines() {
         if let Ok(string) = content {
-            let compiled = parser::Line::from_str(string.as_str());
+            let compiled = parser::Line::from(string.as_str());
             compiled.color_display();
         }
     }
