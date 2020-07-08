@@ -59,6 +59,16 @@ mod tests {
             self.output.comment = Some(String::from(value));
             self
         }
+        fn assert(&self) {
+            let found = Line::from(self.input);
+            assert!(
+                found == self.output,
+                "Test assertion failed\n     Input: '{}'\n  Expected: {:?}\n     Found: {:?}\n",
+                self.input,
+                self.output,
+                found
+            )
+        }
     }
 
     #[test]
@@ -75,7 +85,7 @@ mod tests {
         ];
 
         for test in testcases.iter() {
-            assert_eq!(Line::from(test.input), test.output);
+            test.assert();
         }
     }
 
