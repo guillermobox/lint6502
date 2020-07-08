@@ -28,55 +28,49 @@ mod tests {
 
     struct TestCase {
         input: &'static str,
-        output: (
-            Option<&'static str>,
-            Option<&'static str>,
-            Option<&'static str>,
-        ),
+        output: Line,
+    }
+
+    impl TestCase {
+        fn new(input: &'static str) -> Self {
+            TestCase {
+                input: input,
+                output: Line {
+                    label: None,
+                    comment: None,
+                    instruction: None,
+                },
+            }
+        }
+        fn label(mut self, value: &'static str) -> Self {
+            self.output.label = Some(String::from(value));
+            self
+        }
+        fn instruction(mut self, value: &'static str) -> Self {
+            self.output.instruction = Some(String::from(value));
+            self
+        }
+        fn comment(mut self, value: &'static str) -> Self {
+            self.output.comment = Some(String::from(value));
+            self
+        }
     }
 
     #[test]
     fn test_creation_from_strings() {
         let testcases = [
-            TestCase {
-                input: "next: lda ($24),x ; load from the table",
-                output: (
-                    Some("next"),
-                    Some("lda ($24),x"),
-                    Some(" load from the table"),
-                ),
-            },
-            TestCase {
-                input: "  next  :    lda ($24),x      ; load from the table",
-                output: (
-                    Some("next"),
-                    Some("lda ($24),x"),
-                    Some(" load from the table"),
-                ),
-            },
-            TestCase {
-                input: ":    instr",
-                output: (Some(""), Some("instr"), None),
-            },
-            TestCase {
-                input: "label:",
-                output: (Some("label"), None, None),
-            },
-            TestCase {
-                input: "operation",
-                output: (None, Some("operation"), None),
-            },
-            TestCase {
-                input: ";comment",
-                output: (None, None, Some("comment")),
-            },
+            TestCase::new("next: lda ($24),x ; load from the table")
+                .label("next")
+                .instruction("lda ($24),x")
+                .comment(" load from the table"),
+            TestCase::new(":   instr").label("").instruction("instr"),
+            TestCase::new("label:").label("label"),
+            TestCase::new("operation").instruction("operation"),
+            TestCase::new(";comment").comment("comment"),
         ];
 
         for test in testcases.iter() {
-            let line = Line::from(test.input);
-            assert_eq!(line.label, test.output.0.map(String::from));
-            assert_eq!(line.instruction, test.output.1.map(String::from));
-            assert_eq!(line.comment, test.output.2.map(String::from));
+            assert_eq!(Line::from(test.input), test.output);
         }
     }
 
