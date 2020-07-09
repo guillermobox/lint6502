@@ -53,6 +53,7 @@ mod tests {
     struct TestCase {
         input: &'static str,
         output: Line,
+        failer: bool,
     }
 
     impl TestCase {
@@ -60,6 +61,7 @@ mod tests {
             TestCase {
                 input: input,
                 output: Line::default(),
+                failer: false,
             }
         }
         fn label(mut self, value: &'static str) -> Self {
@@ -74,15 +76,28 @@ mod tests {
             self.output.comment = Some(String::from(value));
             self
         }
+        fn should_fail(mut self) -> Self {
+            self.failer = true;
+            self
+        }
         fn assert(&self) {
             let found = Line::from(self.input);
-            assert!(
-                found == self.output,
-                "Test assertion failed\n     Input: '{}'\n  Expected: {:?}\n     Found: {:?}\n",
-                self.input,
-                self.output,
-                found
-            )
+            match self.failer {
+                false => assert!(
+                    found == self.output,
+                    "Test assertion failed\n     Input: '{}'\n  Expected: {:?}\n     Found: {:?}\n",
+                    self.input,
+                    self.output,
+                    found
+                ),
+                true => assert!(
+                    found != self.output,
+                    "Test assertion should fail but it did not\n         Input: '{}'\n  Not expected: {:?}\n         Found: {:?}\n",
+                    self.input,
+                    self.output,
+                    found
+                )
+            }
         }
     }
 
@@ -95,7 +110,8 @@ mod tests {
         TestCase::new(":   instr").label("").instruction("instr"),
         TestCase::new("label:").label("label"),
         TestCase::new("operation").instruction("operation"),
-        TestCase::new(";comment").comment("comment")
+        TestCase::new(";comment").comment("comment"),
+        TestCase::new("beq :+").instruction("beq :+").should_fail()
     );
 
     test_group!(
@@ -107,19 +123,7 @@ mod tests {
         TestCase::new(":").label(""),
         TestCase::new(":   ").label(""),
         TestCase::new(";   co").comment("   co"),
-        TestCase::new(";co").comment("co")
+        TestCase::new(";co").comment("co"),
+        TestCase::new(";co  ").comment("co").should_fail()
     );
-
-    #[test]
-    #[should_panic]
-    fn test_relative_jump() {
-        assert_eq!(
-            Line {
-                label: None,
-                instruction: Some(String::from("beq :+")),
-                comment: None
-            },
-            Line::from("beq :+")
-        );
-    }
 }
