@@ -35,6 +35,21 @@ impl From<&str> for Line {
 mod tests {
     use super::Line;
 
+    macro_rules! test_group {
+        ($name:ident, $($test:expr),*) => (
+            #[test]
+            fn $name() {
+                for test in [
+                    $(
+                        $test,
+                    )*
+                    ].iter() {
+                    test.assert();
+                }
+            }
+        )
+    }
+
     struct TestCase {
         input: &'static str,
         output: Line,
@@ -71,23 +86,29 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_creation_from_strings() {
-        let testcases = [
-            TestCase::new("next: lda ($24),x ; load from the table")
-                .label("next")
-                .instruction("lda ($24),x")
-                .comment(" load from the table"),
-            TestCase::new(":   instr").label("").instruction("instr"),
-            TestCase::new("label:").label("label"),
-            TestCase::new("operation").instruction("operation"),
-            TestCase::new(";comment").comment("comment"),
-        ];
+    test_group!(
+        test_creation_from_strings,
+        TestCase::new("next: lda ($24),x ; load from the table")
+            .label("next")
+            .instruction("lda ($24),x")
+            .comment(" load from the table"),
+        TestCase::new(":   instr").label("").instruction("instr"),
+        TestCase::new("label:").label("label"),
+        TestCase::new("operation").instruction("operation"),
+        TestCase::new(";comment").comment("comment")
+    );
 
-        for test in testcases.iter() {
-            test.assert();
-        }
-    }
+    test_group!(
+        test_empty_space_removal,
+        TestCase::new("  a:").label("a"),
+        TestCase::new("  a  :").label("a"),
+        TestCase::new("a  :").label("a"),
+        TestCase::new("a:").label("a"),
+        TestCase::new(":").label(""),
+        TestCase::new(":   ").label(""),
+        TestCase::new(";   co").comment("   co"),
+        TestCase::new(";co").comment("co")
+    );
 
     #[test]
     #[should_panic]
