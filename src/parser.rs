@@ -46,6 +46,7 @@ mod tests {
 
     #[test]
     fn test_creation_from_strings() {
+        testfrom!("",);
         testfrom!(": ", label:"");
         testfrom!(":  instr", label:"", instruction:"instr");
         testfrom!("label:", label:"label");
