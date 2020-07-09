@@ -7,8 +7,8 @@ pub struct Line {
     comment: Option<String>,
 }
 
-impl Line {
-    fn new() -> Self {
+impl Default for Line {
+    fn default() -> Self {
         Line {
             label: None,
             instruction: None,
@@ -44,7 +44,7 @@ mod tests {
         fn new(input: &'static str) -> Self {
             TestCase {
                 input: input,
-                output: Line::new(),
+                output: Line::default(),
             }
         }
         fn label(mut self, value: &'static str) -> Self {
