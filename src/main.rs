@@ -1,3 +1,4 @@
+mod instructions;
 mod parser;
 use std::io::BufRead;
 
