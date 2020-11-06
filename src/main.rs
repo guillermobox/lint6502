@@ -1,7 +1,9 @@
+mod definitions;
 mod directives;
 mod instructions;
 mod parser;
 
+use definitions::Definition;
 use directives::Directive;
 use instructions::Instruction;
 use std::io::BufRead;
@@ -21,10 +23,13 @@ fn main() {
                     println!("Instruction found {:?}", instruction);
                 } else if let Ok(directive) = command.parse::<Directive>() {
                     println!("Directive found {:?}", directive);
+                } else if let Ok(definition) = command.parse::<Definition>() {
+                    println!("Definition found {:?}", definition);
                 } else {
-                    println!("UNKNOWN THING!!! {}", command);
+                    panic!("Oh lord what is this command? '{}'", command)
                 }
             }
         }
     }
+    println!("All good");
 }
