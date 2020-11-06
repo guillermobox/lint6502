@@ -2,9 +2,9 @@ use regex::Regex;
 
 #[derive(Debug, PartialEq)]
 pub struct Line {
-    label: Option<String>,
-    instruction: Option<String>,
-    comment: Option<String>,
+    pub label: Option<String>,
+    pub instruction: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl Default for Line {
@@ -19,7 +19,7 @@ impl Default for Line {
 impl From<&str> for Line {
     fn from(line: &str) -> Self {
         let r = Regex::new(
-            r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^;]+?)?\s*(;(?P<comment>.+))?$",
+            r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^+-;][^;]+?)?\s*(;(?P<comment>.+))?$",
         )
         .unwrap();
         let c = r.captures(line).unwrap();
@@ -56,7 +56,7 @@ mod tests {
             label:"next", 
             instruction:"lda ($24),x", 
             comment:" load from the table");
-        //testfrom!("beq :+", instruction:"beq :+");
+        testfrom!("beq :+", instruction:"beq :+");
     }
 
     #[test]
