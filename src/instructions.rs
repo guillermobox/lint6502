@@ -2,23 +2,23 @@ use regex::Regex;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
-pub struct Operation(pub Instruction, pub AddressingMode);
+pub struct Instruction(pub Mnemonic, pub PseudoAddressingMode);
 
-impl FromStr for Operation {
+impl FromStr for Instruction {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let i: Instruction = s.get(0..3).ok_or(())?.parse()?;
+        let mnemonic: Mnemonic = s.get(0..3).ok_or(())?.parse()?;
         if s.len() == 3 {
-            Ok(Operation(i, AddressingMode::Implicit))
+            Ok(Instruction(mnemonic, PseudoAddressingMode::Implicit))
         } else {
-            Ok(Operation(i, s.get(4..).ok_or(())?.parse()?))
+            Ok(Instruction(mnemonic, s.get(4..).ok_or(())?.parse()?))
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
-pub enum AddressingMode {
+pub enum PseudoAddressingMode {
     Implicit,
     Accumulator,
     Inmediate(String),
@@ -30,54 +30,54 @@ pub enum AddressingMode {
     Indirect(String),
 }
 
-impl FromStr for AddressingMode {
+impl FromStr for PseudoAddressingMode {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let r = Regex::new(r"^$").unwrap();
         if r.is_match(s) {
-            return Ok(AddressingMode::Implicit);
+            return Ok(PseudoAddressingMode::Implicit);
         }
         let r = Regex::new(r"^A$").unwrap();
         if r.is_match(s) {
-            return Ok(AddressingMode::Accumulator);
+            return Ok(PseudoAddressingMode::Accumulator);
         }
         let r = Regex::new(r"^#(.+)$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::Inmediate(a.into()));
+            return Ok(PseudoAddressingMode::Inmediate(a.into()));
         }
         let r = Regex::new(r"^\((.+?),[xX]\)$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::IndirectByX(a.into()));
+            return Ok(PseudoAddressingMode::IndirectByX(a.into()));
         }
         let r = Regex::new(r"^\((.+?)\)$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::Indirect(a.into()));
+            return Ok(PseudoAddressingMode::Indirect(a.into()));
         }
         let r = Regex::new(r"^\((.+?)\),[yY]$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::IndirectByY(a.into()));
+            return Ok(PseudoAddressingMode::IndirectByY(a.into()));
         }
         let r = Regex::new(r"^(.+),[xX]$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::IndexedByX(a.into()));
+            return Ok(PseudoAddressingMode::IndexedByX(a.into()));
         }
         let r = Regex::new(r"^(.+),[yY]$").unwrap();
         if r.is_match(s) {
             let a = r.captures(s).unwrap().get(1).unwrap().as_str();
-            return Ok(AddressingMode::IndexedByY(a.into()));
+            return Ok(PseudoAddressingMode::IndexedByY(a.into()));
         }
-        return Ok(AddressingMode::Direct(s.to_string()));
+        return Ok(PseudoAddressingMode::Direct(s.to_string()));
     }
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Instruction {
+pub enum Mnemonic {
     ADC,
     AND,
     ASL,
@@ -136,7 +136,7 @@ pub enum Instruction {
     TYA,
 }
 
-impl FromStr for Instruction {
+impl FromStr for Mnemonic {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -204,58 +204,61 @@ impl FromStr for Instruction {
 
 #[cfg(test)]
 mod tests {
-    use super::AddressingMode;
-    use super::Instruction;
+    use super::Mnemonic;
+    use super::PseudoAddressingMode;
 
     #[test]
-    fn test_instruction_parsing() {
-        assert_eq!(Ok(Instruction::LDA), "lda".parse());
-        assert_eq!(Ok(Instruction::LDA), "LDA".parse());
-        assert_eq!(Ok(Instruction::LDA), "Lda".parse());
-        assert_eq!(Ok(Instruction::STA), "sta".parse());
-        assert_eq!(Ok(Instruction::STA), "STA".parse());
-        assert_eq!(Ok(Instruction::STA), "Sta".parse());
+    fn test_mnemonic_parsing() {
+        assert_eq!(Ok(Mnemonic::LDA), "lda".parse());
+        assert_eq!(Ok(Mnemonic::LDA), "LDA".parse());
+        assert_eq!(Ok(Mnemonic::LDA), "Lda".parse());
+        assert_eq!(Ok(Mnemonic::STA), "sta".parse());
+        assert_eq!(Ok(Mnemonic::STA), "STA".parse());
+        assert_eq!(Ok(Mnemonic::STA), "Sta".parse());
     }
 
     #[test]
-    fn test_addressing_parsing() {
-        assert_eq!(Ok(AddressingMode::Implicit), "".parse());
+    fn test_pseudo_addressing_parsing() {
+        assert_eq!(Ok(PseudoAddressingMode::Implicit), "".parse());
         assert_eq!(
-            Ok(AddressingMode::Inmediate("$23".to_string())),
+            Ok(PseudoAddressingMode::Inmediate("$23".to_string())),
             "#$23".parse()
         );
-        assert_eq!(Ok(AddressingMode::Direct("$23".to_string())), "$23".parse());
         assert_eq!(
-            Ok(AddressingMode::Inmediate("variable".to_string())),
+            Ok(PseudoAddressingMode::Direct("$23".to_string())),
+            "$23".parse()
+        );
+        assert_eq!(
+            Ok(PseudoAddressingMode::Inmediate("variable".to_string())),
             "#variable".parse()
         );
-        assert_eq!(Ok(AddressingMode::Accumulator), "A".parse());
+        assert_eq!(Ok(PseudoAddressingMode::Accumulator), "A".parse());
         assert_eq!(
-            Ok(AddressingMode::IndexedByX("$25".to_string())),
+            Ok(PseudoAddressingMode::IndexedByX("$25".to_string())),
             "$25,x".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::IndexedByX("$25".to_string())),
+            Ok(PseudoAddressingMode::IndexedByX("$25".to_string())),
             "$25,X".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::IndexedByY("$25".to_string())),
+            Ok(PseudoAddressingMode::IndexedByY("$25".to_string())),
             "$25,y".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::IndexedByY("$25".to_string())),
+            Ok(PseudoAddressingMode::IndexedByY("$25".to_string())),
             "$25,Y".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::Indirect("$aa".to_string())),
+            Ok(PseudoAddressingMode::Indirect("$aa".to_string())),
             "($aa)".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::IndirectByX("$bb".to_string())),
+            Ok(PseudoAddressingMode::IndirectByX("$bb".to_string())),
             "($bb,x)".parse()
         );
         assert_eq!(
-            Ok(AddressingMode::IndirectByY("$cc".to_string())),
+            Ok(PseudoAddressingMode::IndirectByY("$cc".to_string())),
             "($cc),y".parse()
         );
     }
