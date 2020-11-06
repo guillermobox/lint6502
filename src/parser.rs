@@ -19,7 +19,7 @@ impl Default for Line {
 impl From<&str> for Line {
     fn from(line: &str) -> Self {
         let r = Regex::new(
-            r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^+-;][^;]+?)?\s*(;(?P<comment>.+))?$",
+            r"^\s*((?P<label>[^:;]*?)\s*:)?\s*(?P<instruction>[^-+;][^;]+?)?\s*(;(?P<comment>.+))?$",
         )
         .unwrap();
         let c = r.captures(line).unwrap();
@@ -57,6 +57,7 @@ mod tests {
             instruction:"lda ($24),x", 
             comment:" load from the table");
         testfrom!("beq :+", instruction:"beq :+");
+        testfrom!("a: .byte $05", label:"a", instruction:".byte $05");
     }
 
     #[test]
