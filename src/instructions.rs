@@ -8,11 +8,11 @@ impl FromStr for Operation {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let i: Instruction = s[0..3].parse().unwrap();
+        let i: Instruction = s.get(0..3).ok_or(())?.parse()?;
         if s.len() == 3 {
             Ok(Operation(i, AddressingMode::Implicit))
         } else {
-            Ok(Operation(i, s[4..].parse().unwrap()))
+            Ok(Operation(i, s.get(4..).ok_or(())?.parse()?))
         }
     }
 }
