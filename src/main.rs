@@ -2,17 +2,29 @@ mod directives;
 mod instructions;
 mod parser;
 
+use directives::Directive;
 use instructions::Instruction;
+use std::io::BufRead;
 
 fn main() {
-    let arguments = std::env::args().collect::<Vec<String>>();
-    if arguments.len() != 2 {
-        println!("Please give me just an argument with an instruction")
-    } else {
-        let op = arguments[1].parse();
-        match op {
-            Ok(Instruction(mne, adr)) => println!("{:} => {:?} {:?}", arguments[1], mne, adr),
-            Err(_) => println!("{} is not an 6502 instruction", arguments[1]),
+    let filepath = std::env::args().nth(1).unwrap(); // yes I know
+    let fhandler = std::fs::File::open(&filepath).unwrap();
+    let reader = std::io::BufReader::new(fhandler);
+    for content in reader.lines() {
+        if let Ok(string) = content {
+            let compiled = parser::Line::from(string.as_str());
+            if let Some(label) = compiled.label {
+                println!("Label found {}", label);
+            }
+            if let Some(command) = compiled.instruction {
+                if let Ok(instruction) = command.parse::<Instruction>() {
+                    println!("Instruction found {:?}", instruction);
+                } else if let Ok(directive) = command.parse::<Directive>() {
+                    println!("Directive found {:?}", directive);
+                } else {
+                    println!("UNKNOWN THING!!! {}", command);
+                }
+            }
         }
     }
 }
